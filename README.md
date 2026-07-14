@@ -17,7 +17,7 @@ torn, painterly edges rendered with a canvas dab mask.
   overhangs reveal paint-stroke continuations (`clip.png` is the original)
 - `build.py` — inlines the image as base64 into a self-contained `a16z-code-curtain.html`
 - `shoot.js` / `audiotest.js` / `sheettest.js` / `flowerdance.js` — Playwright smoke tests
-- `flower1.svg` / `flower2.svg` — poppy and daisy generated with [QuiverAI](https://quiver.ai) (arrow-1.1), embedded in the page; they sway idly and dance while music plays
+- `heads/*.svg` — five flower heads (poppy, daisy, marigold, cosmos, blossom) generated with [QuiverAI](https://quiver.ai) (arrow-1.1); stems are drawn in code. Ten flowers stand as buds along the bottom and bloom as music plays — sustained playing opens more of them, re-blooms them bigger, and sets their petals slowly spinning
 
 ## Run
 
