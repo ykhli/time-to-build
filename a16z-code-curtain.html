@@ -197,13 +197,15 @@ const plants = [];
 function buildGarden() {
   const species = Object.keys(HEADS);
   if (!species.length) return;
-  // two beds flanking the page bottom, staggered heights and sizes
+  // two mirror-symmetric beds flanking the score: tall at the page edges,
+  // stepping down toward the staff (keeps heads clear of the photo's torn
+  // street edge on the right, and of the corner controls)
   const spec = [
-    { x: 2.6,  stemH: 100, head: 38 }, { x: 6.4,  stemH: 150, head: 50 },
-    { x: 10.4, stemH: 88,  head: 34 }, { x: 14.2, stemH: 170, head: 56 },
-    { x: 18.0, stemH: 118, head: 42 }, { x: 80.6, stemH: 128, head: 44 },
-    { x: 84.6, stemH: 176, head: 58 }, { x: 88.6, stemH: 96,  head: 36 },
-    { x: 92.6, stemH: 148, head: 50 }, { x: 96.2, stemH: 108, head: 40 },
+    { x: 3.4,  stemH: 180, head: 56 }, { x: 7.6,  stemH: 150, head: 50 },
+    { x: 11.8, stemH: 122, head: 44 }, { x: 15.8, stemH: 98,  head: 38 },
+    { x: 19.6, stemH: 80,  head: 32 }, { x: 96.6, stemH: 180, head: 56 },
+    { x: 92.4, stemH: 150, head: 50 }, { x: 88.2, stemH: 122, head: 44 },
+    { x: 84.2, stemH: 98,  head: 38 }, { x: 80.4, stemH: 80,  head: 32 },
   ];
   spec.forEach((sp, i) => {
     const div = document.createElement('div');
