@@ -385,7 +385,7 @@ dlBtn.addEventListener('click', async () => {
   if (!wav) return;
   const url = URL.createObjectURL(new Blob([wav], { type: 'audio/wav' }));
   const a = document.createElement('a');
-  a.href = url; a.download = 'its-time-to-build.wav';
+  a.href = url; a.download = 'music.wav';
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 });
