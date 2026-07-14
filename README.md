@@ -16,7 +16,8 @@ torn, painterly edges rendered with a canvas dab mask.
 - `clip_ext.jpg` — photo of 180 Townsend with a smeared 106px border so the torn-edge
   overhangs reveal paint-stroke continuations (`clip.png` is the original)
 - `build.py` — inlines the image as base64 into a self-contained `a16z-code-curtain.html`
-- `shoot.js` / `audiotest.js` — Playwright smoke tests (screenshots + audio trigger check)
+- `shoot.js` / `audiotest.js` / `sheettest.js` / `flowerdance.js` — Playwright smoke tests
+- `flower1.svg` / `flower2.svg` — poppy and daisy generated with [QuiverAI](https://quiver.ai) (arrow-1.1), embedded in the page; they sway idly and dance while music plays
 
 ## Run
 
