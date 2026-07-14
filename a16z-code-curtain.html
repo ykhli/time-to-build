@@ -409,10 +409,10 @@ function drawSheet(now) {
   const yOf = steps => bottom - steps * gap / 2;
 
   ctx.save();
-  // label + staff
+  // label + staff (label sits above the tallest possible ledger stack: A6 = 17 steps)
   ctx.font = '8px "IBM Plex Mono", monospace';
   ctx.fillStyle = 'rgba(138,133,120,0.9)';
-  ctx.fillText('L I V E   S C O R E · C  M A J O R  P E N T A T O N I C', x0 + 46, bottom - 4 * gap - 26);
+  ctx.fillText('L I V E   S C O R E · C  M A J O R  P E N T A T O N I C', x0 + 46, bottom - 19 * gap / 2 - 12);
   ctx.strokeStyle = 'rgba(46,42,36,0.32)';
   ctx.lineWidth = 1;
   for (let l = 0; l < 5; l++) {
@@ -479,8 +479,8 @@ function drawSheet(now) {
 
   function ledger(x, y) {
     ctx.beginPath();
-    ctx.moveTo(x - 8, y);
-    ctx.lineTo(x + 8, y);
+    ctx.moveTo(x - 6.5, y);
+    ctx.lineTo(x + 6.5, y);
     ctx.stroke();
   }
 }
