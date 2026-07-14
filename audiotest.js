@@ -9,13 +9,13 @@ const { chromium } = require('playwright');
   await page.waitForTimeout(300);
   // brush across the strand row (sign is at ~0.715 of the 840px-tall box starting y=80)
   for (let i = 0; i <= 40; i++) {
-    await page.mouse.move(620 + i * 9, 760 + Math.sin(i / 4) * 40);
+    await page.mouse.move(560 + i * 12, 500 + Math.sin(i / 4) * 50);
     await page.waitForTimeout(16);
   }
   const state = await page.evaluate(() => ({
     ctx: audioCtx ? audioCtx.state : 'none',
     lastNoteAt: Math.round(lastNoteAt),
-    strandCount: strands.length,
+    strandCount: strands.length, scored: score.notes.length,
   }));
   console.log(JSON.stringify(state));
   await browser.close();

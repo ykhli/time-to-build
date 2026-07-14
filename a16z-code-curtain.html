@@ -301,10 +301,9 @@ addEventListener('pointerdown', ensureAudio);
 addEventListener('keydown', ensureAudio);
 
 const PENTA = [0, 2, 4, 7, 9]; // C major pentatonic
-function strandFreq(i, n) {
+function strandSemi(i, n) {
   const deg = Math.floor((i / Math.max(1, n - 1)) * 14.999); // three octaves
-  const semi = PENTA[deg % 5] + 12 * Math.floor(deg / 5);
-  return 261.63 * Math.pow(2, semi / 12); // from middle C
+  return PENTA[deg % 5] + 12 * Math.floor(deg / 5); // semitones above middle C
 }
 let lastNoteAt = 0;
 function pluck(freq, vel) {
@@ -322,6 +321,100 @@ function pluck(freq, vel) {
   o1.connect(g); o2.connect(g2); g2.connect(g);
   g.connect(lp); lp.connect(audioCtx.destination);
   o1.start(t0); o2.start(t0); o1.stop(t0 + 1.9); o2.stop(t0 + 1.9);
+}
+
+// ---------- live score: notate each plucked note on a scrolling staff ----------
+// staff position = diatonic steps above E4 (bottom line of the treble staff)
+const LETTER = { 0: 0, 2: 1, 4: 2, 7: 4, 9: 5 }; // pitch class -> C D E G A
+const score = { notes: [], max: 200, xStep: 24 };
+function recordNote(semi, vel) {
+  const midi = 60 + semi;
+  const dn = (Math.floor(midi / 12) - 1) * 7 + LETTER[midi % 12];
+  score.notes.push({ steps: dn - 30, at: performance.now(), vel });
+  if (score.notes.length > score.max) score.notes.shift();
+}
+function drawSheet(now) {
+  const sw = Math.min(W * 0.56, 900);
+  const x0 = (W - sw) / 2;
+  const gap = 9;                       // staff line spacing
+  const bottom = H - 96;               // bottom staff line
+  const yOf = steps => bottom - steps * gap / 2;
+
+  ctx.save();
+  // label + staff
+  ctx.font = '8px "IBM Plex Mono", monospace';
+  ctx.fillStyle = 'rgba(138,133,120,0.9)';
+  ctx.fillText('L I V E   S C O R E · C  M A J O R  P E N T A T O N I C', x0 + 46, bottom - 4 * gap - 26);
+  ctx.strokeStyle = 'rgba(46,42,36,0.32)';
+  ctx.lineWidth = 1;
+  for (let l = 0; l < 5; l++) {
+    ctx.beginPath();
+    ctx.moveTo(x0, yOf(l * 2));
+    ctx.lineTo(x0 + sw, yOf(l * 2));
+    ctx.stroke();
+  }
+  // clef
+  ctx.font = '46px serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = 'rgba(46,42,36,0.75)';
+  ctx.fillText('\u{1D11E}', x0 + 6, bottom + 10);
+
+  // notes scroll left once the line fills
+  const headX0 = x0 + 52;
+  const n = score.notes.length;
+  const scroll = Math.max(0, headX0 + n * score.xStep - (x0 + sw - 24) );
+  ctx.textAlign = 'center';
+  for (let i = 0; i < n; i++) {
+    const note = score.notes[i];
+    const x = headX0 + i * score.xStep - scroll;
+    if (x < headX0 - 4) continue;
+    const y = yOf(note.steps);
+    const age = now - note.at;
+    const pop = age < 260 ? 1 + 0.5 * (1 - age / 260) : 1;
+    const fresh = age < 450;
+    // fade near the left edge as notes scroll off
+    const edge = Math.min(1, (x - (headX0 - 4)) / 60);
+    ctx.globalAlpha = edge;
+    ctx.fillStyle = ctx.strokeStyle = fresh ? '#e8420a' : '#2e2a24';
+    // barline every 8 notes
+    if (i > 0 && i % 8 === 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.25 * edge;
+      ctx.strokeStyle = '#2e2a24';
+      ctx.beginPath();
+      ctx.moveTo(x - score.xStep / 2, yOf(8));
+      ctx.lineTo(x - score.xStep / 2, yOf(0));
+      ctx.stroke();
+      ctx.restore();
+    }
+    // ledger lines
+    ctx.lineWidth = 1;
+    for (let s = -2; s >= note.steps; s -= 2) ledger(x, yOf(s));
+    for (let s = 10; s <= note.steps; s += 2) ledger(x, yOf(s));
+    // note head
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-0.35);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 4.8 * pop, 3.5 * pop, 0, 0, 7);
+    ctx.fill();
+    ctx.restore();
+    // stem: up for low notes, down for high (from the middle line)
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    if (note.steps < 4) { ctx.moveTo(x + 4.4, y - 1); ctx.lineTo(x + 4.4, y - 27); }
+    else { ctx.moveTo(x - 4.4, y + 1); ctx.lineTo(x - 4.4, y + 27); }
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  function ledger(x, y) {
+    ctx.beginPath();
+    ctx.moveTo(x - 8, y);
+    ctx.lineTo(x + 8, y);
+    ctx.stroke();
+  }
 }
 
 let t = 0;
@@ -356,7 +449,10 @@ function frame() {
     step(s, t);
     if (s.hit && now - s.lastNote > 130 && now - lastNoteAt > 28) {
       s.lastNote = lastNoteAt = now;
-      pluck(strandFreq(s.idx, s.count), Math.min(1, 0.25 + mouse.speed / 28));
+      const semi = strandSemi(s.idx, s.count);
+      const vel = Math.min(1, 0.25 + mouse.speed / 28);
+      pluck(261.63 * Math.pow(2, semi / 12), vel);
+      recordNote(semi, vel);
     }
     const pts = s.pts;
     for (let i = 1; i < pts.length; i++) {
@@ -364,6 +460,8 @@ function frame() {
       ctx.fillText(s.chars[i], pts[i].x, pts[i].y);
     }
   }
+
+  drawSheet(now);
 
   // decay mouse velocity so strands settle when pointer stops
   mouse.vx *= 0.82; mouse.vy *= 0.82; mouse.speed *= 0.82;
