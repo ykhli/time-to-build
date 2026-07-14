@@ -1,0 +1,6 @@
+shot_*.png
+band_check.png
+frames/
+candidates/
+*.mp4
+node_modules/

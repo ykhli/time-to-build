@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>a16z — Office Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f0ebe1;
+    --ink:#2e2a24;
+    --accent:#e8420a;
+    --muted:#8a8578;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    overflow:hidden;
+    cursor:crosshair;
+  }
+  /* subtle paper grain */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.18 0 0 0 0 0.16 0 0 0 0 0.13 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:10;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:22px 40px;
+  }
+  .brand{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;letter-spacing:.04em;}
+  .brand small{font-size:9px;color:var(--muted);letter-spacing:.22em;margin-left:14px;font-weight:400;}
+  nav{display:flex;gap:26px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;}
+  nav a{color:var(--muted);text-decoration:none;}
+  nav a.active{color:var(--ink);border-bottom:1px solid var(--accent);padding-bottom:3px;}
+  .cta{
+    background:#181511;color:var(--paper);border:none;border-radius:20px;
+    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;
+    padding:9px 18px;cursor:pointer;
+  }
+  .left{
+    position:fixed;left:56px;top:180px;z-index:10;width:250px;
+  }
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.24em;color:var(--muted);margin-bottom:18px;}
+  h1{
+    font-family:'Playfair Display',serif;font-style:italic;font-weight:600;
+    font-size:76px;line-height:.95;color:#7c2d12;margin-bottom:22px;letter-spacing:-.01em;
+  }
+  .sub{font-size:12.5px;line-height:1.6;color:#57534e;margin-bottom:38px;max-width:220px;}
+  .meta{display:flex;gap:34px;font-family:'IBM Plex Mono',monospace;}
+  .meta div span{display:block;font-size:8px;letter-spacing:.2em;color:var(--muted);margin-bottom:6px;}
+  .meta div b{font-size:12px;font-weight:500;}
+  .stage{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  }
+  canvas{display:block;}
+  .pager{
+    position:fixed;right:44px;top:50%;transform:translateY(-50%);z-index:10;
+    display:flex;flex-direction:column;align-items:center;gap:14px;
+    font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);
+  }
+  .pager button{
+    width:30px;height:30px;border-radius:50%;border:1px solid #c9c2b2;background:transparent;
+    color:var(--ink);cursor:pointer;font-size:12px;
+  }
+  
+  footer{
+    position:fixed;bottom:0;left:0;right:0;z-index:10;
+    display:flex;justify-content:space-between;align-items:flex-end;
+    padding:24px 40px;
+    font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--muted);
+  }
+  footer .hint::before{content:"◦ ";color:var(--accent);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">A16Z <small>SAN FRANCISCO · 2026</small></div>
+  <nav>
+    <a class="active" href="#">San Francisco</a>
+  </nav>
+  <div></div>
+</header>
+
+<div class="left">
+  <h1>a16z</h1>
+  <div class="sub">It&rsquo;s time to build.</div>
+</div>
+
+<div class="stage"><canvas id="c"></canvas></div>
+
+<footer>
+  <div>EVERY GLYPH BELONGS TO “IT’S TIME TO BUILD” · MARC ANDREESSEN, APRIL 2020.</div>
+  <div class="hint">BRUSH THE HANGING WORDS · CLICK ONCE FOR SOUND</div>
+</footer>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+// ---------- the corpus: Marc Andreessen, "It's Time to Build" (April 2020) ----------
+const CORPUS = `
+Every Western institution was unprepared for the coronavirus pandemic, despite many prior warnings. This monumental failure of institutional effectiveness will reverberate for the rest of the decade, but it's not too early to ask why, and what we need to do about it. Part of the problem is clearly foresight, a failure of imagination. But the other part of the problem is what we didn't do in advance, and what we're failing to do now. And that is a failure of action, and specifically our widespread inability to build. We could have these things but we chose not to. We chose not to have the mechanisms, the factories, the systems to make these things. We chose not to build. You see it in housing and the physical footprint of our cities. We should have gleaming skyscrapers and spectacular living environments in all our best cities at levels way beyond what we have now; where are they? You see it in education. Why not educate every 18 year old? Isn't that the most important thing we can possibly do? You see it in manufacturing. Why aren't we building giant, gleaming, state of the art factories producing every conceivable kind of product, at the highest possible quality and lowest possible cost, all throughout our country? The problem is desire. We need to want these things. The problem is inertia. We need to want these things more than we want to prevent these things. The problem is regulatory capture. We need to want new companies to build these things, even if incumbents don't like it. And the problem is will. We need to build these things. I think building is how we reboot the American dream. We need to break the rapidly escalating price curves for housing, education, and healthcare, to make sure that every American can realize the dream, and the only way to do that is to build. Building isn't easy, or we'd already be doing all this. We need to demand more of our political leaders, of our CEOs, our entrepreneurs, our investors. We need to demand more of our culture, of our society. And we need to demand more from one another. We're all necessary, and we can all contribute, to building. Every step of the way, to everyone around us, we should be asking the question: what are you building? Our nation and our civilization were built on production, on building. Our forefathers and foremothers built roads and trains, farms and factories, then the computer, the microchip, the smartphone. There is only one way to honor their legacy and to create the future we want for our own children and grandchildren, and that's to build. It's time to build.
+`.trim() + " ";
+
+// ---------- tokenizer: assign a colour class to every char ----------
+// white / grey combo: bright glyphs hold against the dark brick and glass;
+// greys let filler words recede while staying legible
+const COLORS = {
+  keyword: ['#ffffff', '#fdf8ef'],              // build — pure white, the standout
+  string:  ['#e8e4dc', '#ded9cf'],              // proper nouns — warm off-white
+  number:  ['#f0ece2', '#e3ddd0'],              // numbers — ivory
+  comment: ['rgba(210,206,198,0.55)', 'rgba(195,190,180,0.6)'], // small words — faded grey
+  punct:   ['#b8b3a8', '#a8a298'],              // punctuation — mid grey
+  ident:   ['#f5f2ea', '#e9e5da', '#d9d4c8'],   // body words — white to light grey
+};
+const KEYWORDS = /\b(build|builds|built|builders?|buildings?)\b/gi;
+function tokenize(src) {
+  const cls = new Array(src.length).fill('ident');
+  const mark = (re, name) => {
+    re.lastIndex = 0; let m;
+    while ((m = re.exec(src))) for (let i = m.index; i < m.index + m[0].length; i++) cls[i] = name;
+  };
+  mark(/\b(the|a|an|of|to|and|or|in|on|is|it|its|it's|we|our|for|that|this|these|but|not|be|do|was|what|why)\b/gi, 'comment');
+  mark(/[.,;:!?'"—-]/g, 'punct');
+  mark(/\b\d[\d.]*\b/g, 'number');
+  mark(/\b[A-Z][a-z]+\b/g, 'string');
+  mark(KEYWORDS, 'keyword');
+  let seed = 24681357 >>> 0;
+  const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+  const out = [];
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === '\n' || ch === ' ' || ch === '\t') continue;
+    const shades = COLORS[cls[i]];
+    out.push([ch, shades[Math.floor(rnd() * shades.length)]]);
+  }
+  return out;
+}
+const STREAM = tokenize(CORPUS);
+
+// ---------- layout ----------
+let W, H, img = new Image(), imgBox = {x:0, y:0, w:0, h:0};
+const strands = [];
+const SEG = 11, DAMP = 0.965, GRAVITY = 0.42, ITER = 3, RADIUS = 90, PUSH = 0.6;
+const COL_SPACING = 8;
+const FONT = '500 9.5px "IBM Plex Mono", monospace';
+
+const mouse = { x: -9999, y: -9999, vx: 0, vy: 0, speed: 0 };
+const par = { x: 0, y: 0, tx: 0, ty: 0 };
+const leftEl = document.querySelector('.left');
+let lastMouse = null;
+
+function layout() {
+  W = innerWidth; H = innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+  // image box: center-right, like the reference (clamped so tall images fit)
+  let iw = Math.min(W * 0.46, 760);
+  const maxH = H * 0.84;
+  if (iw * (imgH / imgW) > maxH) iw = maxH * (imgW / imgH);
+  const ih = iw * (imgH / imgW);
+  imgBox = { x: W * 0.52 - iw / 2 + W * 0.04, y: H * 0.5 - ih / 2, w: iw, h: ih };
+
+  // build strands hanging in a row just below the andreessen horowitz sign
+  const SIGN = { x0: -0.05, x1: 1.05, y: 0.325 }; // hang line spanning past the photo edges
+  strands.length = 0;
+  let cursor = 0;
+  const spanX = (SIGN.x1 - SIGN.x0) * imgBox.w;
+  const n = Math.floor(spanX / COL_SPACING);
+  for (let s = 0; s <= n; s++) {
+    const ax = imgBox.x + SIGN.x0 * imgBox.w + s * COL_SPACING;
+    const ay = imgBox.y + SIGN.y * imgBox.h;
+    // ragged bottom edge: reach roughly the foot of the building
+    const noise = Math.sin(s * 0.55) * 0.5 + Math.sin(s * 0.13 + 2) * 0.5;
+    let frac = 0.38 + noise * 0.06;
+    if (Math.sin(s * 2.17 + 1) > 0.86) frac *= 0.55 + 0.2 * Math.abs(Math.sin(s));
+    const len = Math.max(4, Math.floor((imgBox.h * frac) / SEG));
+    const pts = [], chars = [], cols = [];
+    for (let i = 0; i <= len; i++) {
+      pts.push({ x: ax, y: ay + i * SEG, px: ax, py: ay + i * SEG });
+      const [ch, col] = STREAM[cursor % STREAM.length]; cursor++;
+      chars.push(ch); cols.push(col);
+    }
+    strands.push({ ax, ay, baseAx: ax, baseAy: ay, pts, chars, cols, phase: s * 0.35, idx: s, count: n + 1, lastNote: 0, hit: false });
+  }
+  buildMasked();
+}
+
+// ---------- torn / painterly edge mask for the photo ----------
+// the jpg carries a BORDER-px smeared margin on every side, so the mask's
+// overhanging swipes reveal paint-stroke continuations of the photo
+const BORDER = 106;
+let maskedCanvas = null, maskExt = 0;
+function buildMasked() {
+  if (!img.complete || !imgBox.w) return;
+  const w = imgBox.w, h = imgBox.h;
+  const pad = maskExt = w * BORDER / imgW;
+  const mc = document.createElement('canvas');
+  mc.width = Math.ceil((w + pad * 2) * DPR); mc.height = Math.ceil((h + pad * 2) * DPR);
+  const m = mc.getContext('2d');
+  m.setTransform(DPR, 0, 0, DPR, 0, 0);
+  let seed = 987654321 >>> 0;
+  const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+
+  // core region, well inside the photo
+  m.fillStyle = '#000';
+  m.fillRect(pad + 24, pad + 24, w - 48, h - 48);
+
+  // torn edge: overlapping dabs along the perimeter, biased inward so the
+  // edge reads ragged with only occasional outward bites
+  const per = 2 * (w + h);
+  const steps = Math.floor(per / 12);
+  for (let i = 0; i < steps; i++) {
+    const p = (i / steps) * per;
+    let x, y, nx = 0, ny = 0; // inward normal
+    if (p < w) { x = p; y = 0; ny = 1; }
+    else if (p < w + h) { x = w; y = p - w; nx = -1; }
+    else if (p < 2 * w + h) { x = 2 * w + h - p; y = h; ny = -1; }
+    else { x = 0; y = 2 * (w + h) - p; nx = 1; }
+    const r = 7 + rnd() * 20 + (rnd() < 0.1 ? rnd() * 30 : 0);
+    m.beginPath();
+    m.arc(pad + x + nx * 10 + (rnd() - 0.5) * 20, pad + y + ny * 10 + (rnd() - 0.5) * 20, r, 0, 7);
+    m.fill();
+  }
+
+  // big painterly swipes breaking past the edges, like the reference
+  const swipe = (cx, cy, rx, ry, rot) => {
+    m.save(); m.translate(pad + cx, pad + cy); m.rotate(rot);
+    m.beginPath(); m.ellipse(0, 0, rx, ry, 0, 0, 7); m.fill();
+    for (let i = 0; i < 26; i++) {
+      const a = rnd() * 7;
+      m.beginPath();
+      m.arc(Math.cos(a) * rx * 0.92, Math.sin(a) * ry * 0.92, 4 + rnd() * 12, 0, 7);
+      m.fill();
+    }
+    m.restore();
+  };
+  swipe(w * 0.76, -20, w * 0.21, 30, -0.05); // sky swipe, top right
+  swipe(w * 0.16, -10, w * 0.15, 20, 0.05);
+  swipe(-16, h * 0.58, 26, h * 0.2, 0);      // left edge bite
+  swipe(w + 14, h * 0.46, 24, h * 0.24, 0);  // right edge bite
+  swipe(w * 0.5, h + 10, w * 0.2, 22, 0.03); // bottom crumble
+
+  // keep the (border-extended) photo only where the mask is
+  m.globalCompositeOperation = 'source-in';
+  m.drawImage(img, 0, 0, w + pad * 2, h + pad * 2);
+  maskedCanvas = mc;
+}
+
+function step(strand, t) {
+  const pts = strand.pts;
+  for (let i = 1; i < pts.length; i++) {
+    const p = pts[i];
+    const vx = (p.x - p.px) * DAMP;
+    const vy = (p.y - p.py) * DAMP;
+    p.px = p.x; p.py = p.y;
+    const breeze = Math.sin(t * 0.9 + p.y * 0.012 + strand.phase) * 0.045;
+    p.x += vx + breeze;
+    p.y += vy + GRAVITY;
+    const dx = p.x - mouse.x, dy = p.y - mouse.y;
+    const d = Math.hypot(dx, dy);
+    if (d < RADIUS && mouse.speed > 0.2) {
+      const f = (1 - d / RADIUS) * PUSH;
+      p.x += mouse.vx * f;
+      p.y += mouse.vy * f * 0.55;
+      strand.hit = true;
+    }
+  }
+  for (let k = 0; k < ITER; k++) {
+    pts[0].x = strand.ax; pts[0].y = strand.ay;
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.hypot(dx, dy) || 1e-6;
+      const diff = (d - SEG) / d;
+      const mx = dx * 0.5 * diff, my = dy * 0.5 * diff;
+      if (i === 1) { b.x -= dx * diff; b.y -= dy * diff; }
+      else { a.x += mx; a.y += my; b.x -= mx; b.y -= my; }
+    }
+  }
+}
+
+// ---------- piano: each strand is a string, brushing plays notes ----------
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+addEventListener('pointerdown', ensureAudio);
+addEventListener('keydown', ensureAudio);
+
+const PENTA = [0, 2, 4, 7, 9]; // C major pentatonic
+function strandFreq(i, n) {
+  const deg = Math.floor((i / Math.max(1, n - 1)) * 14.999); // three octaves
+  const semi = PENTA[deg % 5] + 12 * Math.floor(deg / 5);
+  return 261.63 * Math.pow(2, semi / 12); // from middle C
+}
+let lastNoteAt = 0;
+function pluck(freq, vel) {
+  if (!audioCtx || audioCtx.state !== 'running') return;
+  const t0 = audioCtx.currentTime;
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(0.10 * vel, t0 + 0.004);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.8);
+  const lp = audioCtx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = Math.min(freq * 6, 8500); lp.Q.value = 0.4;
+  const o1 = audioCtx.createOscillator(); o1.type = 'sine'; o1.frequency.value = freq;
+  const o2 = audioCtx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = freq * 2;
+  const g2 = audioCtx.createGain(); g2.gain.value = 0.30;
+  o1.connect(g); o2.connect(g2); g2.connect(g);
+  g.connect(lp); lp.connect(audioCtx.destination);
+  o1.start(t0); o2.start(t0); o1.stop(t0 + 1.9); o2.stop(t0 + 1.9);
+}
+
+let t = 0;
+function frame() {
+  t += 1 / 60;
+  ctx.clearRect(0, 0, W, H);
+
+  // parallax: ease toward the cursor-derived target; each layer moves at its
+  // own depth (photo slow, curtain faster, page copy drifts opposite)
+  par.x += (par.tx - par.x) * 0.055;
+  par.y += (par.ty - par.y) * 0.055;
+  const poX = par.x * 14, poY = par.y * 9;      // photo layer
+  leftEl.style.transform = `translate(${par.x * -10}px, ${par.y * -6}px)`;
+
+  // photo with torn edges and soft shadow
+  ctx.save();
+  ctx.shadowColor = 'rgba(40,30,15,0.30)';
+  ctx.shadowBlur = 50;
+  ctx.shadowOffsetY = 24;
+  ctx.drawImage(maskedCanvas, imgBox.x - maskExt + poX, imgBox.y - maskExt + poY, imgBox.w + maskExt * 2, imgBox.h + maskExt * 2);
+  ctx.restore();
+
+  // curtain — anchored to the photo layer so it stays pinned under the sign;
+  // brushed strands play pentatonic piano notes (left = low, right = high)
+  ctx.font = FONT;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const now = performance.now();
+  for (const s of strands) {
+    s.ax = s.baseAx + poX; s.ay = s.baseAy + poY;
+    s.hit = false;
+    step(s, t);
+    if (s.hit && now - s.lastNote > 130 && now - lastNoteAt > 28) {
+      s.lastNote = lastNoteAt = now;
+      pluck(strandFreq(s.idx, s.count), Math.min(1, 0.25 + mouse.speed / 28));
+    }
+    const pts = s.pts;
+    for (let i = 1; i < pts.length; i++) {
+      ctx.fillStyle = s.cols[i];
+      ctx.fillText(s.chars[i], pts[i].x, pts[i].y);
+    }
+  }
+
+  // decay mouse velocity so strands settle when pointer stops
+  mouse.vx *= 0.82; mouse.vy *= 0.82; mouse.speed *= 0.82;
+
+  requestAnimationFrame(frame);
+}
+
+addEventListener('mousemove', e => {
+  if (lastMouse) {
+    mouse.vx = Math.max(-40, Math.min(40, e.clientX - lastMouse.x));
+    mouse.vy = Math.max(-40, Math.min(40, e.clientY - lastMouse.y));
+    mouse.speed = Math.hypot(mouse.vx, mouse.vy);
+  }
+  mouse.x = e.clientX; mouse.y = e.clientY;
+  lastMouse = { x: e.clientX, y: e.clientY };
+  par.tx = Math.max(-1, Math.min(1, (e.clientX - W / 2) / (W / 2)));
+  par.ty = Math.max(-1, Math.min(1, (e.clientY - H / 2) / (H / 2)));
+});
+addEventListener('mouseleave', () => { mouse.x = mouse.y = -9999; par.tx = par.ty = 0; });
+addEventListener('resize', layout);
+
+let imgW = 1600, imgH = 1000;
+img.onload = () => { imgW = img.naturalWidth - 2 * BORDER; imgH = img.naturalHeight - 2 * BORDER; layout(); frame(); };
+img.src = 'clip_ext.jpg';
+</script>
+</body>
+</html>
