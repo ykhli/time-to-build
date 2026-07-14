@@ -5,18 +5,24 @@ const { chromium } = require('playwright');
   page.on('pageerror', e => console.log('PAGE ERR:', String(e)));
   await page.goto('file://' + __dirname + '/index.html');
   await page.waitForTimeout(2000);
-  await page.mouse.click(800, 950); // user gesture -> ensureAudio
-  await page.waitForTimeout(300);
-  // brush across the strand row (sign is at ~0.715 of the 840px-tall box starting y=80)
+  await page.click('#soundBtn');
+  await page.waitForTimeout(200);
   for (let i = 0; i <= 40; i++) {
     await page.mouse.move(560 + i * 12, 500 + Math.sin(i / 4) * 50);
     await page.waitForTimeout(16);
   }
-  const state = await page.evaluate(() => ({
-    ctx: audioCtx ? audioCtx.state : 'none',
-    lastNoteAt: Math.round(lastNoteAt),
-    strandCount: strands.length, scored: score.notes.length,
-  }));
+  const state = await page.evaluate(async () => {
+    const wav = await renderSong();
+    return {
+      soundOn, ctx: audioCtx ? audioCtx.state : 'none',
+      scored: score.notes.length,
+      dlEnabled: !document.getElementById('dlBtn').disabled,
+      wavBytes: wav ? wav.byteLength : 0,
+    };
+  });
+  // toggle off works
+  await page.click('#soundBtn');
+  state.soundOffAfterToggle = await page.evaluate(() => !soundOn);
   console.log(JSON.stringify(state));
   await browser.close();
 })();

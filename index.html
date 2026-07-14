@@ -75,6 +75,14 @@
     font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--muted);
   }
   footer .hint::before{content:"◦ ";color:var(--accent);}
+  .controls{display:flex;align-items:center;gap:12px;}
+  .ctl{
+    width:32px;height:32px;border-radius:50%;border:1px solid #c9c2b2;background:transparent;
+    color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;
+  }
+  .ctl:hover{border-color:var(--accent);color:var(--accent);}
+  .ctl[disabled]{opacity:.35;cursor:default;}
+  .ctl[disabled]:hover{border-color:#c9c2b2;color:var(--ink);}
 </style>
 </head>
 <body>
@@ -96,7 +104,16 @@
 
 <footer>
   <div>EVERY GLYPH BELONGS TO “IT’S TIME TO BUILD” · MARC ANDREESSEN, APRIL 2020.</div>
-  <div class="hint">BRUSH THE HANGING WORDS · CLICK ONCE FOR SOUND</div>
+  <div class="controls">
+    <span class="hint">BRUSH THE HANGING WORDS</span>
+    <button id="soundBtn" class="ctl" title="Turn sound on" aria-label="Toggle sound">
+      <svg id="icoOff" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><line x1="16" y1="9" x2="22" y2="15"/><line x1="22" y1="9" x2="16" y2="15"/></svg>
+      <svg id="icoOn" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9.2 9.2 0 0 1 0 13"/></svg>
+    </button>
+    <button id="dlBtn" class="ctl" title="Download your song (.wav)" aria-label="Download song" disabled>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><polyline points="6 11 12 17 18 11"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
+    </button>
+  </div>
 </footer>
 
 <script>
@@ -291,14 +308,24 @@ function step(strand, t) {
 
 // ---------- piano: each strand is a string, brushing plays notes ----------
 let audioCtx = null;
+let soundOn = false;
 function ensureAudio() {
   if (!audioCtx) {
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
   }
   if (audioCtx.state === 'suspended') audioCtx.resume();
 }
-addEventListener('pointerdown', ensureAudio);
-addEventListener('keydown', ensureAudio);
+
+const soundBtn = document.getElementById('soundBtn');
+const icoOn = document.getElementById('icoOn');
+const icoOff = document.getElementById('icoOff');
+soundBtn.addEventListener('click', () => {
+  soundOn = !soundOn;
+  if (soundOn) ensureAudio();
+  icoOn.style.display = soundOn ? '' : 'none';
+  icoOff.style.display = soundOn ? 'none' : '';
+  soundBtn.title = soundOn ? 'Turn sound off' : 'Turn sound on';
+});
 
 const PENTA = [0, 2, 4, 7, 9]; // C major pentatonic
 function strandSemi(i, n) {
@@ -306,22 +333,62 @@ function strandSemi(i, n) {
   return PENTA[deg % 5] + 12 * Math.floor(deg / 5); // semitones above middle C
 }
 let lastNoteAt = 0;
-function pluck(freq, vel) {
-  if (!audioCtx || audioCtx.state !== 'running') return;
-  const t0 = audioCtx.currentTime;
-  const g = audioCtx.createGain();
+// one synth voice, usable on the live context or an OfflineAudioContext
+function pluckInto(ac, dest, freq, vel, at) {
+  const t0 = at;
+  const g = ac.createGain();
   g.gain.setValueAtTime(0, t0);
   g.gain.linearRampToValueAtTime(0.10 * vel, t0 + 0.004);
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.8);
-  const lp = audioCtx.createBiquadFilter();
+  const lp = ac.createBiquadFilter();
   lp.type = 'lowpass'; lp.frequency.value = Math.min(freq * 6, 8500); lp.Q.value = 0.4;
-  const o1 = audioCtx.createOscillator(); o1.type = 'sine'; o1.frequency.value = freq;
-  const o2 = audioCtx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = freq * 2;
-  const g2 = audioCtx.createGain(); g2.gain.value = 0.30;
+  const o1 = ac.createOscillator(); o1.type = 'sine'; o1.frequency.value = freq;
+  const o2 = ac.createOscillator(); o2.type = 'triangle'; o2.frequency.value = freq * 2;
+  const g2 = ac.createGain(); g2.gain.value = 0.30;
   o1.connect(g); o2.connect(g2); g2.connect(g);
-  g.connect(lp); lp.connect(audioCtx.destination);
+  g.connect(lp); lp.connect(dest);
   o1.start(t0); o2.start(t0); o1.stop(t0 + 1.9); o2.stop(t0 + 1.9);
 }
+function pluck(freq, vel) {
+  if (!soundOn || !audioCtx || audioCtx.state !== 'running') return;
+  pluckInto(audioCtx, audioCtx.destination, freq, vel, audioCtx.currentTime);
+}
+
+// ---------- download the played song as a .wav ----------
+async function renderSong() {
+  const notes = score.notes;
+  if (!notes.length) return null;
+  const t0 = notes[0].at;
+  const dur = (notes[notes.length - 1].at - t0) / 1000 + 2.4;
+  const off = new OfflineAudioContext(1, Math.ceil(44100 * dur), 44100);
+  for (const n of notes) pluckInto(off, off.destination, 261.63 * Math.pow(2, n.semi / 12), n.vel, (n.at - t0) / 1000);
+  const buf = await off.startRendering();
+  return encodeWav(buf);
+}
+function encodeWav(buf) {
+  const data = buf.getChannelData(0);
+  const out = new DataView(new ArrayBuffer(44 + data.length * 2));
+  const str = (o, s) => { for (let i = 0; i < s.length; i++) out.setUint8(o + i, s.charCodeAt(i)); };
+  str(0, 'RIFF'); out.setUint32(4, 36 + data.length * 2, true); str(8, 'WAVE');
+  str(12, 'fmt '); out.setUint32(16, 16, true); out.setUint16(20, 1, true); out.setUint16(22, 1, true);
+  out.setUint32(24, 44100, true); out.setUint32(28, 44100 * 2, true); out.setUint16(32, 2, true); out.setUint16(34, 16, true);
+  str(36, 'data'); out.setUint32(40, data.length * 2, true);
+  for (let i = 0; i < data.length; i++) {
+    const s = Math.max(-1, Math.min(1, data[i]));
+    out.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+  return out.buffer;
+}
+const dlBtn = document.getElementById('dlBtn');
+dlBtn.addEventListener('click', async () => {
+  const wav = await renderSong();
+  if (!wav) return;
+  const url = URL.createObjectURL(new Blob([wav], { type: 'audio/wav' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = 'its-time-to-build.wav';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+});
 
 // ---------- live score: notate each plucked note on a scrolling staff ----------
 // staff position = diatonic steps above E4 (bottom line of the treble staff)
@@ -330,8 +397,9 @@ const score = { notes: [], max: 200, xStep: 24 };
 function recordNote(semi, vel) {
   const midi = 60 + semi;
   const dn = (Math.floor(midi / 12) - 1) * 7 + LETTER[midi % 12];
-  score.notes.push({ steps: dn - 30, at: performance.now(), vel });
+  score.notes.push({ semi, steps: dn - 30, at: performance.now(), vel });
   if (score.notes.length > score.max) score.notes.shift();
+  dlBtn.disabled = false;
 }
 function drawSheet(now) {
   const sw = Math.min(W * 0.56, 900);
