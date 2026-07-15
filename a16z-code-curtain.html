@@ -274,20 +274,24 @@ function drawFlowerSea(poX, poY) {
   const since = performance.now() - lastNoteAt;
   const moving = Math.min(1, energy * 2) * Math.max(0, Math.min(1, (4000 - since) / 2500));
   for (const f of flowers) {
-    // bloom spring with overshoot; openness only ever ratchets up, and
-    // everything freezes exactly once the music stops
-    f.ov += (1 - f.o) * 0.03;
-    f.ov *= 0.88;
-    f.o += f.ov;
-    if (Math.abs(1 - f.o) < 0.002 && Math.abs(f.ov) < 0.0005) { f.o = 1; f.ov = 0; }
+    // bloom-in eases open monotonically — size only ever grows, so there is
+    // no pop/blink; everything freezes exactly once the music stops
+    f.o += (1 - f.o) * 0.035;
+    if (1 - f.o < 0.002) f.o = 1;
     if (moving > 0.01 && f.o > 0.85) {
       f.spin += 0.0015 + energy * 0.0025;
       f.openTime += energy / 60;
-      if (f.openTime > f.rebloomEvery) {            // re-bloom, a size bigger
+      if (f.openTime > f.rebloomEvery) {            // re-bloom: grow a size bigger
         f.openTime = 0;
-        f.boost = Math.min(1.45, f.boost * 1.09);
-        f.ov -= 0.34;
+        f.boostT = Math.min(1.45, (f.boostT || 1) * 1.09);
       }
+    }
+    // boost eases toward its target while the music sounds — smooth growth,
+    // no snap; the rate rides the motion envelope so it stops with the sound
+    if (moving > 0.001) {
+      const bt = f.boostT || 1;
+      f.boost += (bt - f.boost) * 0.02 * Math.min(1, moving * 3);
+      if (bt - f.boost < 0.001) f.boost = bt;
     }
     const im = headCanvases[f.kind];
     if (!im || f.o <= 0.02) continue;
