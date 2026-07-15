@@ -29,31 +29,15 @@
   }
   header{
     position:fixed;top:0;left:0;right:0;z-index:10;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:22px 40px;
+    display:flex;align-items:baseline;justify-content:space-between;
+    padding:26px 40px;
   }
   .brand{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;letter-spacing:.04em;}
   .brand small{font-size:9px;color:var(--muted);letter-spacing:.22em;font-weight:400;}
-  nav{display:flex;gap:26px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;}
-  nav a{color:var(--muted);text-decoration:none;}
-  nav a.active{color:var(--ink);border-bottom:1px solid var(--accent);padding-bottom:3px;}
-  .cta{
-    background:#181511;color:var(--paper);border:none;border-radius:20px;
-    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;
-    padding:9px 18px;cursor:pointer;
-  }
-  .left{
-    position:fixed;left:56px;top:180px;z-index:10;width:250px;
-  }
-  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.24em;color:var(--muted);margin-bottom:18px;}
-  h1{
+  .tagline{
     font-family:'Playfair Display',serif;font-style:italic;font-weight:600;
-    font-size:76px;line-height:.95;color:#7c2d12;margin-bottom:22px;letter-spacing:-.01em;
+    font-size:26px;color:#7c2d12;letter-spacing:-.01em;will-change:transform;
   }
-  .sub{font-size:12.5px;line-height:1.6;color:#57534e;margin-bottom:38px;max-width:220px;}
-  .meta{display:flex;gap:34px;font-family:'IBM Plex Mono',monospace;}
-  .meta div span{display:block;font-size:8px;letter-spacing:.2em;color:var(--muted);margin-bottom:6px;}
-  .meta div b{font-size:12px;font-weight:500;}
   .stage{
     position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
   }
@@ -98,16 +82,9 @@
 
 <header>
   <div class="brand"><small>SAN FRANCISCO · 2026</small></div>
-  <nav>
-    <a class="active" href="#">San Francisco</a>
-  </nav>
-  <div></div>
+  <div class="tagline">It&rsquo;s time to build.</div>
+  <div class="brand"><small>180 TOWNSEND ST</small></div>
 </header>
-
-<div class="left">
-  <h1>a16z</h1>
-  <div class="sub">It&rsquo;s time to build.</div>
-</div>
 
 <div class="stage"><canvas id="c"></canvas></div>
 
@@ -181,7 +158,7 @@ const FONT = '500 9.5px "IBM Plex Mono", monospace';
 
 const mouse = { x: -9999, y: -9999, vx: 0, vy: 0, speed: 0 };
 const par = { x: 0, y: 0, tx: 0, ty: 0 };
-const leftEl = document.querySelector('.left');
+const leftEl = document.querySelector('.tagline');
 
 // ---------- the garden: flowers that bloom with the music ----------
 // heads generated with QuiverAI (arrow-1.1); stems drawn here
@@ -268,12 +245,12 @@ function layout() {
   canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
-  // image box: center-right, like the reference (clamped so tall images fit)
+  // image box: centered, giving the header and score breathing room
   let iw = Math.min(W * 0.46, 760);
-  const maxH = H * 0.84;
+  const maxH = H * 0.78;
   if (iw * (imgH / imgW) > maxH) iw = maxH * (imgW / imgH);
   const ih = iw * (imgH / imgW);
-  imgBox = { x: W * 0.52 - iw / 2 + W * 0.04, y: H * 0.5 - ih / 2, w: iw, h: ih };
+  imgBox = { x: W / 2 - iw / 2, y: H * 0.485 - ih / 2, w: iw, h: ih };
 
   // build strands hanging in a row just below the andreessen horowitz sign
   const SIGN = { x0: -0.05, x1: 1.05, y: 0.325 }; // hang line spanning past the photo edges
@@ -501,7 +478,9 @@ function drawSheet(now) {
   // label + staff (label sits above the tallest possible ledger stack: A6 = 17 steps)
   ctx.font = '8px "IBM Plex Mono", monospace';
   ctx.fillStyle = 'rgba(138,133,120,0.9)';
-  ctx.fillText('L I V E   S C O R E · C  M A J O R  P E N T A T O N I C', x0 + 46, bottom - 19 * gap / 2 - 12);
+  ctx.textAlign = 'center';
+  ctx.fillText('L I V E   S C O R E · C  M A J O R  P E N T A T O N I C', x0 + sw / 2, bottom - 19 * gap / 2 - 12);
+  ctx.textAlign = 'left';
   ctx.strokeStyle = 'rgba(46,42,36,0.32)';
   ctx.lineWidth = 1;
   for (let l = 0; l < 5; l++) {
