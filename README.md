@@ -17,7 +17,7 @@ torn, painterly edges rendered with a canvas dab mask.
   overhangs reveal paint-stroke continuations (`clip.png` is the original)
 - `build.py` — inlines the image as base64 into a self-contained `a16z-code-curtain.html`
 - `shoot.js` / `audiotest.js` / `sheettest.js` / `flowerdance.js` — Playwright smoke tests
-- `heads/*.svg` — five flower heads (poppy, daisy, marigold, cosmos, blossom) generated with [QuiverAI](https://quiver.ai) (arrow-1.1); stems are drawn in code. Ten flowers stand as buds along the bottom and bloom as music plays — sustained playing opens more of them, re-blooms them bigger, and sets their petals slowly spinning
+- `heads/*.svg` — ten flower heads (poppy, daisy, marigold, cosmos, sunflower, anemone, aster, zinnia, buttercup, blossom) generated with [QuiverAI](https://quiver.ai) (arrow-1.1), embedded inline. As notes play, flowers bloom in around the photo — a dense band along the street, climbing the torn edges, a sparse crown on top — until the building sits in a sea of flowers. Sustained music re-blooms them bigger; when the music stops they freeze and keep their bloom.
 
 ## Run
 
