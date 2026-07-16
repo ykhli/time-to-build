@@ -211,16 +211,38 @@ let energy = 0;               // rises as notes play, decays slowly
 // ---------- the bird: appears once the whole garden is in bloom ----------
 // one QuiverAI body + one QuiverAI wing; the flapping is pure code (rotating
 // the wing around its shoulder root), so the silhouette never jitters
-const BIRD = {
-  body: "<svg preserveAspectRatio=\"xMidYMid meet\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 150 150\"><style type=\"text/css\">.bbc-0 {fill:#C43B06;}.bbc-1 {fill:#373022;}.bbc-2 {fill:#F0E8CD;}</style><polygon class=\"bbc-0\" points=\"116 51.3 127.2 56 117.9 60.4\"/><path class=\"bbc-1\" d=\"m117.1 49.9c-1.7-4.7-6.4-11.1-17.1-11.1-6.4-0.2-12.6 2.4-17.9 6-8.8 5.8-18 15.6-26.3 24.5-9 9.6-25.7 25.6-37.4 39.3 4.7 0.2 8.2-1.2 11.9-3.3l12.5-8.7c6.5 8.4 18.1 18 37 18h0.9s0-34.3 38.2-45.5c0.1-4-0.6-15.8-1.8-19.2z\"/><path class=\"bbc-2\" d=\"m79.8 114.7c11.9-0.3 22.9-4.6 30.3-14 5.7-7.1 8.6-17.1 8.8-27l0.1-4.7c-14.5 1.3-39 14.7-39.2 45.7z\"/><path class=\"bbc-2\" d=\"m105.5 49.8c-2.4 0.8-3 4.2-0.3 5.1 3.2 1 4.6-3.7 1.7-4.9l-1.4-0.2z\"/><path class=\"bbc-2\" d=\"m105.5 49.7c-2.4 0.7-3.2 4.2-0.3 5.2 3.2 1 4.6-3.7 1.7-4.9l-1.4-0.3z\"/></svg>",
-  wing: "<svg preserveAspectRatio=\"xMidYMid meet\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 150 150\"><style type=\"text/css\">.bwc-0 {fill:url(#SVGID_1_);}.bwc-1 {fill:#342D22;}</style><linearGradient id=\"SVGID_1_\" x1=\"75\" x2=\"75\" y1=\"-.1231\" y2=\"131.4\" gradientUnits=\"userSpaceOnUse\"><stop stop-color=\"#fff\" offset=\"0\"/><stop stop-color=\"#fff\" stop-opacity=\"0\" offset=\"1\"/></linearGradient><path class=\"bwc-0\" d=\"m17.7 131.4c3.7-12.8 12.2-37.8 31.3-52.2 15.2-11.4 47.9-32.8 82.4-60.4 1.5 3.8 4.7 15-11.7 27.9-8.1 7.5-25.4 19.4-25.4 19.4l37.5-22.1c1.8 5.9 0.8 20.5-38.4 39.2l32.7-11.2c0.7 10.8-9.2 17.1-19.9 21.2-14.4 5.7-31.1 9.1-42.1 12.3-14.8 3.7-29 10.5-46.4 25.9z\"/><path class=\"bwc-1\" d=\"m17.7 131.4c3.7-12.8 12.2-37.8 31.3-52.2 15.2-11.4 47.9-32.8 82.4-60.4 1.6 3.8 4.8 15-11.7 27.9-8.1 7.5-25.4 19.4-25.4 19.4l37.5-22.1c1.8 5.9 0.8 20.5-38.4 39.2l32.7-11.2c0.7 10.8-9.2 17.1-19.9 21.2-14.4 5.7-31.1 9.1-42.1 11.7-14.8 3.7-29 10.5-46.4 26.5z\"/></svg>"
-};
-const birdImgs = {};
-for (const k in BIRD) {
+const BIRD_SVG = "<svg preserveAspectRatio=\"xMidYMid meet\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 150 150\"><style type=\"text/css\">.wbc-0 {fill:#342F26;}.wbc-1 {fill:url(#SVGID_1_);}.wbc-2 {fill:#D7410C;}.wbc-3 {fill:#F5E8CD;}.wbc-4 {fill:#EEE0CA;}</style><path class=\"wbc-0\" d=\"m129.6 53.3c-1.6-3.7-6.6-11.3-17.1-12.3s-17 4.5-21.5 10.3c-1.8 2.3-4.1 5.4-5.2 7.9 4.1 4.1 6.6 10.3 5.2 18.2-0.2-8.9-5.7-15.4-12.5-20.6l-55.6-40.5c-2.5 6.1 0.1 12.8 5.7 18.3 3 2.9 16.2 11.3 22.5 15.8l-32.9-16.5c-0.4 5.6 2.1 12.6 9.3 16.4 4.1 2.2 14.9 6.2 25 11.7l-31.2-8.2c0.8 5.2 4.9 11.9 12.5 13.8l21.7 4.9-21.9 0.4c1 2.9 4.8 6.5 8.2 7.7 5.9 2.3 12.5 1.3 16.7 4-2.4 3.2-13.2 14-19.9 19.4-7.5 6.3-21.3 17.1-30.6 25.1 1.4 1.8 6.6 3.9 10.9 1.2 4.5-2.7 9.5-6.9 13.2-10.4l-11.2 12.7c2.9 1.8 7.7 1.5 11.2-0.8 2.5-1.7 7.3-7.5 10.3-10.8l7.6-9.2c0.6-0.9 2.1 0.2 4.9 1.3 7.7 3.3 16.2 5.3 25.1 5.2 14.4-0.5 22.5-4.4 29.9-11.2 5.2-4.6 9.2-10.1 12.1-16.6 3.4-7.5 6-17.6 7.9-27.5v-9.7z\"/><linearGradient id=\"SVGID_1_\" x1=\"128.5\" x2=\"141.8\" y1=\"93.05\" y2=\"93.05\" gradientTransform=\"matrix(1 0 0 -1 0 150)\" gradientUnits=\"userSpaceOnUse\"><stop stop-color=\"#CE3B13\" offset=\"0\"/><stop stop-color=\"#DC4A12\" offset=\"1\"/></linearGradient><path class=\"wbc-1\" d=\"m129.9 53.3 11.9 4.5-11.9 4.7h-0.5c-1.3-2.4-1.8-6.1 0.2-9.4l0.3 0.2z\"/><path class=\"wbc-3\" d=\"m75.8 114.9c4.1-15.9 20.8-34.9 43.1-37.5l3.4-0.4c-2.2 8.1-9.7 36.1-42.9 38l-3.6-0.1z\"/><path class=\"wbc-4\" d=\"m117.1 52.1c1.7 0 2.9 1.3 2.9 2.9s-1.2 3.4-2.9 3.4c-1.6 0-3.1-1.3-3.1-3 0-1.8 1.4-3.3 3.1-3.3z\"/></svg>";
+// The bird arrives from QuiverAI as ONE drawing; I dissect it myself. Its
+// charcoal outline is a single path, so the split is raster-space: the same
+// render is masked into a wing layer (the polygon over the raised feathers,
+// in viewBox coords, found by inspection) and a body layer (everything
+// else). The seam is dark-on-dark at the shoulder, so it never shows.
+const BIRD_VB = 150, BIRD_PX = 256;
+const WING_POLY = [[0, 0], [84, 0], [84, 58], [76, 90], [40, 90], [0, 55]];
+const WING_PIVOT = [83, 64];                        // shoulder, viewBox coords
+const birdLayers = {};                              // body, wing canvases
+{
   const im = new Image();
   im.src = 'data:image/svg+xml;charset=utf-8,' +
-    encodeURIComponent(BIRD[k].replace('<svg ', '<svg width="256" height="256" '));
-  birdImgs[k] = im;
+    encodeURIComponent(BIRD_SVG.replace('<svg ', `<svg width="${BIRD_PX}" height="${BIRD_PX}" `));
+  im.onload = () => {
+    const k = BIRD_PX / BIRD_VB;
+    const poly = g => {
+      g.beginPath();
+      WING_POLY.forEach(([x, y], i) => i ? g.lineTo(x * k, y * k) : g.moveTo(x * k, y * k));
+      g.closePath();
+    };
+    for (const part of ['body', 'wing']) {
+      const c = document.createElement('canvas');
+      c.width = c.height = BIRD_PX;
+      const g = c.getContext('2d');
+      g.drawImage(im, 0, 0, BIRD_PX, BIRD_PX);
+      g.globalCompositeOperation = part === 'wing' ? 'destination-in' : 'destination-out';
+      poly(g);
+      g.fill();
+      birdLayers[part] = c;
+    }
+  };
 }
 let gardenFull = false;       // set when the last flower spot is taken
 let birdSeen = false;         // first flight fires the moment the garden fills
@@ -239,7 +261,7 @@ function launchBird(now) {
   bird.glidePhase = Math.random() * 7;               // where the glides fall
 }
 function maybeLaunchBird(now) {
-  if (bird.active || !birdImgs.body) return;
+  if (bird.active || !birdLayers.body) return;
   if (gardenFull && !birdSeen) {                     // debut: garden just filled
     birdSeen = true;
     launchBird(now);
@@ -253,40 +275,33 @@ function drawBird(now) {
   if (!bird.active) return;
   const p = (now - bird.t0) / bird.dur;
   if (p >= 1) { bird.active = false; return; }
-  const body = birdImgs.body, wing = birdImgs.wing;
-  if (!body.complete || !wing.complete) return;
+  if (!birdLayers.body) return;
   const x = -70 + p * (W + 140);
   const y = bird.y + Math.sin(p * Math.PI * bird.f1 + bird.p1) * bird.a1
                    + Math.sin(p * Math.PI * bird.f2 + bird.p2) * bird.a2;
   // flap-glide envelope: mostly flapping, easing into brief wing-high glides
   const glide = Math.max(0, Math.sin(now / 1400 + bird.glidePhase) - 0.55) / 0.45;
   const flap = Math.sin(now / 105) * (1 - glide * 0.85);   // ~4.8 beats/sec
-  // asymmetric stroke: deep upstroke, shallow downstroke (never past forward)
-  const wingAng = -0.35 - (flap > 0 ? flap * 0.85 : flap * 0.40);
+  // rotation away from the drawn pose: downstroke sweeps toward horizontal,
+  // upstroke lifts a touch past the native raised pose
+  const wingAng = 0.16 + (flap > 0 ? flap * 0.48 : flap * 0.22);
   // slope of the current path → the body banks into climbs and dives
   const dy = (Math.cos(p * Math.PI * bird.f1 + bird.p1) * bird.a1 * bird.f1
             + Math.cos(p * Math.PI * bird.f2 + bird.p2) * bird.a2 * bird.f2) * Math.PI / (W + 140);
   const tilt = Math.atan(dy) * 0.6;
-  const s = 42;                                       // body box, px
+  const s = 46;                                       // display size, px
+  const k = s / BIRD_PX, px = WING_PIVOT[0] / BIRD_VB * BIRD_PX, py = WING_PIVOT[1] / BIRD_VB * BIRD_PX;
   ctx.save();
   ctx.translate(x, y - flap * 2.5);
   ctx.rotate(tilt);
-  // far wing: behind the body, same stroke slightly ahead in phase, dimmed —
-  // it peeks past the near wing's edges instead of reading as a tail
+  // wing behind the body, rotating about the shoulder
   ctx.save();
-  ctx.translate(-s * 0.10, -s * 0.13);
-  ctx.rotate(wingAng * 0.85 - 0.22);
-  ctx.globalAlpha = 0.5;
-  ctx.drawImage(wing, -s * 0.12, -s * 0.60, s * 0.68, s * 0.63);
-  ctx.restore();
-  // body
-  ctx.drawImage(body, -s / 2, -s / 2, s, s);
-  // near wing: pivots at its shoulder root (lower-left of the wing art)
-  ctx.save();
-  ctx.translate(-s * 0.02, -s * 0.10);
+  ctx.translate((px - BIRD_PX / 2) * k, (py - BIRD_PX / 2) * k);
   ctx.rotate(wingAng);
-  ctx.drawImage(wing, -s * 0.14, -s * 0.68, s * 0.78, s * 0.72);
+  ctx.drawImage(birdLayers.wing, -px * k, -py * k, s, s);
   ctx.restore();
+  // body on top — the seam stays hidden under the charcoal shoulder
+  ctx.drawImage(birdLayers.body, -s / 2, -s / 2, s, s);
   ctx.restore();
 }
 
