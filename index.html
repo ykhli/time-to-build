@@ -245,13 +245,16 @@ const birdLayers = {};                              // body, wing canvases
   };
 }
 let gardenFull = false;       // set when the last flower spot is taken
-let birdSeen = false;         // first flight fires the moment the garden fills
+let birdSeen = false;         // first flight fires once the photo ring blooms
 let playTotal = 0;            // seconds of actual playing, cumulative
 let birdNext = Infinity;      // playtime threshold for repeat flights
+let motionEnv = 0;            // the music-motion envelope, set each frame
 const bird = { active: false };
 function launchBird(now) {
   bird.active = true;
-  bird.t0 = now;
+  bird.p = 0;                 // progress accrues only while music sounds
+  bird.clock = 0;             // flap/glide clock, same rule
+  bird.last = now;
   bird.dur = 9000 + Math.random() * 6000;
   bird.y = H * (0.12 + Math.random() * 0.16);
   // trajectory: two stacked sines with random freq/phase/amp → each crossing
@@ -262,10 +265,11 @@ function launchBird(now) {
 }
 function maybeLaunchBird(now) {
   if (bird.active || !birdLayers.body) return;
-  if (gardenFull && !birdSeen) {                     // debut: garden just filled
+  const ringFull = flowerSpots.length && flowers.length >= flowerSpots.length;
+  if (ringFull && !birdSeen) {                       // debut: the photo ring just filled
     birdSeen = true;
     launchBird(now);
-    birdNext = playTotal + 30 + Math.random() * 20;
+    birdNext = playTotal + 25 + Math.random() * 15;
   } else if (birdSeen && playTotal > birdNext) {     // encores while playing on
     launchBird(now);
     birdNext = playTotal + 35 + Math.random() * 30;
@@ -273,15 +277,22 @@ function maybeLaunchBird(now) {
 }
 function drawBird(now) {
   if (!bird.active) return;
-  const p = (now - bird.t0) / bird.dur;
+  // the bird rides the same music envelope as the garden: it glides to a
+  // stop when the playing stops (matching the piano's decay tail) and picks
+  // the crossing back up where it left off
+  const dt = now - bird.last;
+  bird.last = now;
+  bird.p += (dt / bird.dur) * motionEnv;
+  bird.clock += dt * motionEnv;
+  const p = bird.p;
   if (p >= 1) { bird.active = false; return; }
   if (!birdLayers.body) return;
   const x = -70 + p * (W + 140);
   const y = bird.y + Math.sin(p * Math.PI * bird.f1 + bird.p1) * bird.a1
                    + Math.sin(p * Math.PI * bird.f2 + bird.p2) * bird.a2;
   // flap-glide envelope: mostly flapping, easing into brief wing-high glides
-  const glide = Math.max(0, Math.sin(now / 1400 + bird.glidePhase) - 0.55) / 0.45;
-  const flap = Math.sin(now / 105) * (1 - glide * 0.85);   // ~4.8 beats/sec
+  const glide = Math.max(0, Math.sin(bird.clock / 1400 + bird.glidePhase) - 0.55) / 0.45;
+  const flap = Math.sin(bird.clock / 105) * (1 - glide * 0.85); // ~4.8 beats/sec
   // rotation strictly downward from the drawn raised pose: the wing sweeps
   // toward horizontal and back, never lifting above where it was drawn —
   // lifting past the native pose exposed the masked-out notch in the body
@@ -407,6 +418,7 @@ function drawFlowerSea(poX, poY) {
   // stop ~4s after the last note (matching the piano's decay tail)
   const since = performance.now() - lastNoteAt;
   const moving = Math.min(1, energy * 2) * Math.max(0, Math.min(1, (4000 - since) / 2500));
+  motionEnv = moving;                                // shared with the bird
   playTotal += moving / 60;                          // clock of actual playing
   for (const f of flowers) {
     // bloom-in eases open monotonically — size only ever grows, so there is
