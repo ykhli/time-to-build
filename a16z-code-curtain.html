@@ -589,8 +589,7 @@ function step(strand, t) {
 
 // ---------- piano: each strand is a string, brushing plays notes ----------
 let audioCtx = null;
-let soundOn = true;           // on by default; the context unlocks on the
-                              // first real gesture (browsers require one)
+let soundOn = false;
 function ensureAudio() {
   if (!audioCtx) {
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
@@ -601,22 +600,13 @@ function ensureAudio() {
 const soundBtn = document.getElementById('soundBtn');
 const icoOn = document.getElementById('icoOn');
 const icoOff = document.getElementById('icoOff');
-function paintSoundBtn() {
-  icoOn.style.display = soundOn ? '' : 'none';
-  icoOff.style.display = soundOn ? 'none' : '';
-  soundBtn.title = soundOn ? 'Turn sound off' : 'Turn sound on';
-}
 soundBtn.addEventListener('click', () => {
   soundOn = !soundOn;
   if (soundOn) ensureAudio();
-  paintSoundBtn();
+  icoOn.style.display = soundOn ? '' : 'none';
+  icoOff.style.display = soundOn ? 'none' : '';
+  soundBtn.title = soundOn ? 'Turn sound off' : 'Turn sound on';
 });
-paintSoundBtn();
-// try immediately (some browsers allow it), then arm the first gesture of
-// any kind — click, key, or touch anywhere — to unlock the audio context
-ensureAudio();
-for (const ev of ['pointerdown', 'keydown', 'touchstart'])
-  addEventListener(ev, () => { if (soundOn) ensureAudio(); }, { once: false, capture: true });
 
 const PENTA = [0, 2, 4, 7, 9]; // C major pentatonic
 function strandSemi(i, n) {
