@@ -208,11 +208,12 @@ const HEADS = {
 };
 let energy = 0;               // rises as notes play, decays slowly
 
-// ---------- the bird: appears after a long spell of playing ----------
-// two QuiverAI flight frames (wings up / wings down), injected like the heads
+// ---------- the bird: appears once the whole garden is in bloom ----------
+// one QuiverAI body + one QuiverAI wing; the flapping is pure code (rotating
+// the wing around its shoulder root), so the silhouette never jitters
 const BIRD = {
-  up: "<svg preserveAspectRatio=\"xMidYMid meet\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 150 150\"><style type=\"text/css\">.buc-0 {fill:#FFFFFF;}.buc-1 {fill:#383226;}.buc-2 {fill:#F2E7CF;}.buc-3 {fill:#DC440A;}.buc-4 {fill:#F2E6CE;}.buc-5 {fill:none;}</style><path class=\"buc-1\" d=\"m115.8 69c-1-2.1-3.9-6.4-10-6.9-4.9-0.5-8.8 1.8-10.8 3.3l-9.3 6.4-36.6-33c-2 3.2-4.8 9.3-4.8 17.4 0.1 10.6 5.1 23.6 17.4 29.7l3.8 1.7-39.2 28.7c2.4 1.5 6.9 2.7 11.6 0l21.3-14.6c3.3 0.7 7.6 1.5 12.1 1.8 3 0.1 11.2 0.9 19.1-2.5 9.2-3.6 14.5-11.6 17.2-17.1l7.2-8.9 1-6z\"/><path class=\"buc-1\" d=\"m63.8 48.6 21.9 20.7 3.7-2.7-15.8-34.2c-2.9 2.4-7.8 8.2-9.8 16.2z\"/><path class=\"buc-2\" d=\"m71.3 103.6c3 0.1 11.2 0.8 19.1-2.5 8.5-3.3 13.6-10.2 17.2-17.4-3.1-0.7-9.3-1.3-16.6 1-7.4 2.4-15.8 8.7-19.7 18.9z\"/><path class=\"buc-3\" d=\"m115.7 69 8 3.6-8.9 2.2c-0.7-1.9-0.8-4 0.9-5.8z\"/><path class=\"buc-4\" d=\"m107.4 68.1c-0.6 0.6-1.7 2.7 0.3 2.7s1.7-4.1-0.3-2.7z\"/><circle class=\"buc-4\" cx=\"107.4\" cy=\"69.2\" r=\"1.6\"/></svg>",
-  down: "<svg preserveAspectRatio=\"xMidYMid meet\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 150 150\"><style type=\"text/css\">.bdc-0 {fill:#F4E8CB;}.bdc-1 {fill:#332D23;}.bdc-2 {fill:#DC4709;}.bdc-3 {fill:#F6EACB;}</style><path class=\"bdc-0\" d=\"m130.9 68c-4.9 10.6-15.4 27.5-39.4 27.6-18.7 0.1-31.5-9.1-39.1-17.2-2-2.1-4-4.6-5.9-7.3l24.5 0.8 31.8-17 28.1 13.1z\"/><path class=\"bdc-1\" d=\"m134.9 48c-2.3-3.7-6.5-7.6-14.2-7.6-3.9 0-7.5 1.2-10.1 3.2-2.7 2.2-8.1 6.5-13 10.2h-90.4c0.3 5.7 5 10.8 11.4 10.8h22.9c1.3 5.9 8.2 16.7 19.3 23.1l9.2-15.8-40.4 32.7c4.6 2.4 12.5 4.9 22.3 4.9 16.7 0 37.8-7.1 48.8-28.6 1.5-2.7 2.7-5.6 3.2-7.4v-1.8c3.4-1.6 10-4.9 17.7-4.9 2.8 0 5.7 0.3 9.2 1.3 1.8-3.8 3.7-10.7 4.3-13.5l-0.2-6.6z\"/><path class=\"bdc-2\" d=\"m134.9 48.1 7.9 4-8 4s-3.7-4.2 0.1-8.2\"/><path class=\"bdc-3\" d=\"m127 49.3c0 1.1-0.8 2.1-1.9 2.1s-2.2-0.9-2.2-2.1c0-1 0.8-2.2 2.2-2.2 1.1 0 1.9 1 1.9 2.2\"/></svg>"
+  body: "<svg preserveAspectRatio=\"xMidYMid meet\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 150 150\"><style type=\"text/css\">.bbc-0 {fill:#C43B06;}.bbc-1 {fill:#373022;}.bbc-2 {fill:#F0E8CD;}</style><polygon class=\"bbc-0\" points=\"116 51.3 127.2 56 117.9 60.4\"/><path class=\"bbc-1\" d=\"m117.1 49.9c-1.7-4.7-6.4-11.1-17.1-11.1-6.4-0.2-12.6 2.4-17.9 6-8.8 5.8-18 15.6-26.3 24.5-9 9.6-25.7 25.6-37.4 39.3 4.7 0.2 8.2-1.2 11.9-3.3l12.5-8.7c6.5 8.4 18.1 18 37 18h0.9s0-34.3 38.2-45.5c0.1-4-0.6-15.8-1.8-19.2z\"/><path class=\"bbc-2\" d=\"m79.8 114.7c11.9-0.3 22.9-4.6 30.3-14 5.7-7.1 8.6-17.1 8.8-27l0.1-4.7c-14.5 1.3-39 14.7-39.2 45.7z\"/><path class=\"bbc-2\" d=\"m105.5 49.8c-2.4 0.8-3 4.2-0.3 5.1 3.2 1 4.6-3.7 1.7-4.9l-1.4-0.2z\"/><path class=\"bbc-2\" d=\"m105.5 49.7c-2.4 0.7-3.2 4.2-0.3 5.2 3.2 1 4.6-3.7 1.7-4.9l-1.4-0.3z\"/></svg>",
+  wing: "<svg preserveAspectRatio=\"xMidYMid meet\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 150 150\"><style type=\"text/css\">.bwc-0 {fill:url(#SVGID_1_);}.bwc-1 {fill:#342D22;}</style><linearGradient id=\"SVGID_1_\" x1=\"75\" x2=\"75\" y1=\"-.1231\" y2=\"131.4\" gradientUnits=\"userSpaceOnUse\"><stop stop-color=\"#fff\" offset=\"0\"/><stop stop-color=\"#fff\" stop-opacity=\"0\" offset=\"1\"/></linearGradient><path class=\"bwc-0\" d=\"m17.7 131.4c3.7-12.8 12.2-37.8 31.3-52.2 15.2-11.4 47.9-32.8 82.4-60.4 1.5 3.8 4.7 15-11.7 27.9-8.1 7.5-25.4 19.4-25.4 19.4l37.5-22.1c1.8 5.9 0.8 20.5-38.4 39.2l32.7-11.2c0.7 10.8-9.2 17.1-19.9 21.2-14.4 5.7-31.1 9.1-42.1 12.3-14.8 3.7-29 10.5-46.4 25.9z\"/><path class=\"bwc-1\" d=\"m17.7 131.4c3.7-12.8 12.2-37.8 31.3-52.2 15.2-11.4 47.9-32.8 82.4-60.4 1.6 3.8 4.8 15-11.7 27.9-8.1 7.5-25.4 19.4-25.4 19.4l37.5-22.1c1.8 5.9 0.8 20.5-38.4 39.2l32.7-11.2c0.7 10.8-9.2 17.1-19.9 21.2-14.4 5.7-31.1 9.1-42.1 11.7-14.8 3.7-29 10.5-46.4 26.5z\"/></svg>"
 };
 const birdImgs = {};
 for (const k in BIRD) {
@@ -221,32 +222,71 @@ for (const k in BIRD) {
     encodeURIComponent(BIRD[k].replace('<svg ', '<svg width="256" height="256" '));
   birdImgs[k] = im;
 }
+let gardenFull = false;       // set when the last flower spot is taken
+let birdSeen = false;         // first flight fires the moment the garden fills
 let playTotal = 0;            // seconds of actual playing, cumulative
-let birdNext = 25;            // playtime threshold for the next flight
-const bird = { active: false, x0: 0, t0: 0, dur: 0, y: 0, amp: 0 };
-function maybeLaunchBird(now) {
-  if (bird.active || playTotal < birdNext || !birdImgs.up) return;
+let birdNext = Infinity;      // playtime threshold for repeat flights
+const bird = { active: false };
+function launchBird(now) {
   bird.active = true;
   bird.t0 = now;
-  bird.dur = 11000 + Math.random() * 4000;          // a leisurely crossing
-  bird.y = H * (0.16 + Math.random() * 0.10);       // above the building
-  bird.amp = 14 + Math.random() * 12;               // bob depth
-  birdNext = playTotal + 40 + Math.random() * 25;   // next one takes longer
+  bird.dur = 9000 + Math.random() * 6000;
+  bird.y = H * (0.12 + Math.random() * 0.16);
+  // trajectory: two stacked sines with random freq/phase/amp → each crossing
+  // wanders differently (lazy arcs, shallow dives, little lifts)
+  bird.a1 = 18 + Math.random() * 26; bird.f1 = 2 + Math.random() * 2.5; bird.p1 = Math.random() * 7;
+  bird.a2 = 6 + Math.random() * 14;  bird.f2 = 5 + Math.random() * 4;   bird.p2 = Math.random() * 7;
+  bird.glidePhase = Math.random() * 7;               // where the glides fall
+}
+function maybeLaunchBird(now) {
+  if (bird.active || !birdImgs.body) return;
+  if (gardenFull && !birdSeen) {                     // debut: garden just filled
+    birdSeen = true;
+    launchBird(now);
+    birdNext = playTotal + 30 + Math.random() * 20;
+  } else if (birdSeen && playTotal > birdNext) {     // encores while playing on
+    launchBird(now);
+    birdNext = playTotal + 35 + Math.random() * 30;
+  }
 }
 function drawBird(now) {
   if (!bird.active) return;
   const p = (now - bird.t0) / bird.dur;
   if (p >= 1) { bird.active = false; return; }
-  const x = -60 + p * (W + 120);
-  const flap = Math.sin(now / 90);                  // ~5.5 wingbeats/sec
-  const im = birdImgs[flap > 0 ? 'up' : 'down'];
-  if (!im.complete) return;
-  const y = bird.y + Math.sin(p * Math.PI * 5) * bird.amp - flap * 3;
-  const s = 46;
+  const body = birdImgs.body, wing = birdImgs.wing;
+  if (!body.complete || !wing.complete) return;
+  const x = -70 + p * (W + 140);
+  const y = bird.y + Math.sin(p * Math.PI * bird.f1 + bird.p1) * bird.a1
+                   + Math.sin(p * Math.PI * bird.f2 + bird.p2) * bird.a2;
+  // flap-glide envelope: mostly flapping, easing into brief wing-high glides
+  const glide = Math.max(0, Math.sin(now / 1400 + bird.glidePhase) - 0.55) / 0.45;
+  const flap = Math.sin(now / 105) * (1 - glide * 0.85);   // ~4.8 beats/sec
+  // asymmetric stroke: deep upstroke, shallow downstroke (never past forward)
+  const wingAng = -0.35 - (flap > 0 ? flap * 0.85 : flap * 0.40);
+  // slope of the current path → the body banks into climbs and dives
+  const dy = (Math.cos(p * Math.PI * bird.f1 + bird.p1) * bird.a1 * bird.f1
+            + Math.cos(p * Math.PI * bird.f2 + bird.p2) * bird.a2 * bird.f2) * Math.PI / (W + 140);
+  const tilt = Math.atan(dy) * 0.6;
+  const s = 42;                                       // body box, px
   ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(Math.cos(p * Math.PI * 5) * 0.06);     // slight glide tilt
-  ctx.drawImage(im, -s / 2, -s / 2, s, s);
+  ctx.translate(x, y - flap * 2.5);
+  ctx.rotate(tilt);
+  // far wing: behind the body, same stroke slightly ahead in phase, dimmed —
+  // it peeks past the near wing's edges instead of reading as a tail
+  ctx.save();
+  ctx.translate(-s * 0.10, -s * 0.13);
+  ctx.rotate(wingAng * 0.85 - 0.22);
+  ctx.globalAlpha = 0.5;
+  ctx.drawImage(wing, -s * 0.12, -s * 0.60, s * 0.68, s * 0.63);
+  ctx.restore();
+  // body
+  ctx.drawImage(body, -s / 2, -s / 2, s, s);
+  // near wing: pivots at its shoulder root (lower-left of the wing art)
+  ctx.save();
+  ctx.translate(-s * 0.02, -s * 0.10);
+  ctx.rotate(wingAng);
+  ctx.drawImage(wing, -s * 0.14, -s * 0.68, s * 0.78, s * 0.72);
+  ctx.restore();
   ctx.restore();
 }
 
@@ -341,7 +381,7 @@ function spawnFlowers() {
     let s = null;
     if (flowers.length < flowerSpots.length) s = flowerSpots[flowers.length];
     else s = nextFieldSpot();
-    if (!s) return;
+    if (!s) { gardenFull = true; return; }
     flowers.push(Object.assign({ o: 0, ov: 0, boost: 1, spin: 0, openTime: 0 }, s));
   }
 }
