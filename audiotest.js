@@ -5,7 +5,7 @@ const { chromium } = require('playwright');
   page.on('pageerror', e => console.log('PAGE ERR:', String(e)));
   await page.goto('file://' + __dirname + '/index.html');
   await page.waitForTimeout(2000);
-  await page.click('#soundBtn');
+  await page.mouse.click(800, 950);   // sound is on by default; any click unlocks
   await page.waitForTimeout(200);
   for (let i = 0; i <= 40; i++) {
     await page.mouse.move(560 + i * 12, 500 + Math.sin(i / 4) * 50);
