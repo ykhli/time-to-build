@@ -282,9 +282,10 @@ function drawBird(now) {
   // flap-glide envelope: mostly flapping, easing into brief wing-high glides
   const glide = Math.max(0, Math.sin(now / 1400 + bird.glidePhase) - 0.55) / 0.45;
   const flap = Math.sin(now / 105) * (1 - glide * 0.85);   // ~4.8 beats/sec
-  // rotation away from the drawn pose: downstroke sweeps toward horizontal,
-  // upstroke lifts a touch past the native raised pose
-  const wingAng = 0.16 + (flap > 0 ? flap * 0.48 : flap * 0.22);
+  // rotation strictly downward from the drawn raised pose: the wing sweeps
+  // toward horizontal and back, never lifting above where it was drawn —
+  // lifting past the native pose exposed the masked-out notch in the body
+  const wingAng = -(0.40 + flap * 0.36);                // ∈ [0.04, 0.62], all down
   // slope of the current path → the body banks into climbs and dives
   const dy = (Math.cos(p * Math.PI * bird.f1 + bird.p1) * bird.a1 * bird.f1
             + Math.cos(p * Math.PI * bird.f2 + bird.p2) * bird.a2 * bird.f2) * Math.PI / (W + 140);

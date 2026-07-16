@@ -12,7 +12,7 @@ const { chromium } = require('playwright');
     const k = s / BIRD_PX, px = WING_PIVOT[0] / BIRD_VB * BIRD_PX, py = WING_PIVOT[1] / BIRD_VB * BIRD_PX;
     for (let i = 0; i < 6; i++) {
       const flap = Math.sin((i / 6) * Math.PI * 2);
-      const wingAng = 0.16 + (flap > 0 ? flap * 0.48 : flap * 0.22);
+      const wingAng = -(0.40 + flap * 0.36);
       const x = 200 + i * 230, y = 130;
       ctx.save();
       ctx.translate(x, y);
