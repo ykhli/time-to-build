@@ -4,3 +4,11 @@ frames/
 candidates/
 *.mp4
 node_modules/
+*.jpg
+*.json
+!package.json
+sheet_zoom.png
+dbg.js
+flowershot.js
+flower1.svg
+flower2.svg
